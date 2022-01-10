@@ -1,23 +1,30 @@
 import React, { useState } from 'react';
 import db from './firebase';
+import firebase from 'firebase';
 
 function App() {
+  const storage = firebase.storage();
   const [name, setName] = useState('');
   const [roll, setRoll] = useState('');
   const [section, setSection] = useState('');
   const [gender, setGender] = useState('male');
   const [data, setData] = useState([]);
+
+  const [image, setImage] = useState('');
+  const [download_url, setDownload_url] = useState('');
   const reset = () => {
     setName('');
     setRoll('');
     setSection('');
     setGender('male');
+    setDownload_url('');
   }
 
   const insert = () => {
-    if (name !== '' && roll !== '' && section !== '' && gender !== '') {
+    if (name !== '' && roll !== '' && section !== '' && gender !== '' && image !== '') {
+      upload()
       db.collection('students_list').doc(roll).set({
-        name, roll, section, gender, id: roll
+        name, roll, section, gender, id: roll, image_url: download_url
       })
       reset()
     } else {
@@ -39,8 +46,8 @@ function App() {
     if (roll !== '') {
       db.collection('students_list').doc(roll).update({
         name: name,
-        roll: roll, 
-        section: section, 
+        roll: roll,
+        section: section,
         gender: gender
       })
       alert('updated successfully');
@@ -67,6 +74,16 @@ function App() {
       ))
   }
 
+
+  const upload = () => {
+    if (image == null)
+      return;
+    const path = storage.ref(`/student_images/${image.name}`)
+    path.put(image)
+    path.getDownloadURL().then(url => setDownload_url(url))
+  }
+
+
   return (
     <div className="container">
       <h1>Student List</h1>
@@ -89,6 +106,13 @@ function App() {
           <option value="female">Female</option>
         </select>
       </div>
+      <div className="mb-3">
+        <label htmlFor="photo" className="form-label">Profile Picture</label>
+        <input type="file" className="form-control" onChange={(e) => { setImage(e.target.files[0]) }} id="photo" />
+        {!download_url && <><button onClick={upload} className="btn btn-danger btn-sm my-2">Add</button>
+          <small className="text-danger">Please select a profile picture</small></>}
+
+      </div>
 
       <div className="buttons my-3">
         <button className="btn btn-primary mx-1" onClick={insert}>insert</button>
@@ -100,13 +124,14 @@ function App() {
 
       <div className="data">
         {data ? (
-          <table class="table">
+          <table className="table">
             <thead>
               <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Roll no</th>
                 <th scope="col">Section</th>
                 <th scope="col">Gender</th>
+                <th scope="col">Profile picture</th>
               </tr>
             </thead>
             <tbody>
@@ -116,6 +141,7 @@ function App() {
                   <td>{data?.roll}</td>
                   <td>{data?.section}</td>
                   <td>{data?.gender}</td>
+                  <td><img src={data?.image_url} style={{ width: '40px', height: '40px' }} /></td>
                 </tr>
               ) : (
                 data.map(student => (
@@ -124,6 +150,7 @@ function App() {
                     <td>{student?.roll}</td>
                     <td>{student?.section}</td>
                     <td>{student?.gender}</td>
+                    <td><img src={student?.image_url} style={{ width: '40px', height: '40px' }} /></td>
                   </tr>
                 ))
               )}
