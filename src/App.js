@@ -141,7 +141,7 @@ function App() {
                   <td>{data?.roll}</td>
                   <td>{data?.section}</td>
                   <td>{data?.gender}</td>
-                  <td><img src={data?.image_url} style={{ width: '40px', height: '40px' }} /></td>
+                  <td><img src={data?.image_url} alt="" style={{ width: '40px', height: '40px' }} /></td>
                 </tr>
               ) : (
                 data.map(student => (
@@ -150,7 +150,7 @@ function App() {
                     <td>{student?.roll}</td>
                     <td>{student?.section}</td>
                     <td>{student?.gender}</td>
-                    <td><img src={student?.image_url} style={{ width: '40px', height: '40px' }} /></td>
+                    <td><img alt="" src={student?.image_url} style={{ width: '40px', height: '40px' }} /></td>
                   </tr>
                 ))
               )}
