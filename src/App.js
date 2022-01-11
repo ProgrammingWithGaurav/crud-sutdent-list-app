@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { v4 as uuid } from 'uuid';
 import db from './firebase';
 import firebase from 'firebase';
 
@@ -9,6 +10,7 @@ function App() {
   const [section, setSection] = useState('');
   const [gender, setGender] = useState('male');
   const [data, setData] = useState([]);
+  const [students, setStudents] = useState([]);
 
   const [image, setImage] = useState('');
   const [download_url, setDownload_url] = useState('');
@@ -24,7 +26,9 @@ function App() {
     if (name !== '' && roll !== '' && section !== '' && gender !== '' && image !== '') {
       upload()
       db.collection('students_list').doc(roll).set({
-        name, roll, section, gender, id: roll, image_url: download_url
+        name, roll, section, gender,
+        id: roll,
+        image_url: download_url
       })
       reset()
     } else {
@@ -67,18 +71,20 @@ function App() {
 
   }
 
-  const getAllData = () => {
+  useEffect(() => {
     db.collection('students_list')
       .onSnapshot((snapshot) => (
-        setData(snapshot.docs.map((doc) => doc.data()))
+        setStudents(snapshot.docs.map((doc) => doc.data()))
       ))
-  }
+
+  }, [students])
 
 
   const upload = () => {
     if (image == null)
       return;
-    const path = storage.ref(`/student_images/${image.name}`)
+    const id = uuid();
+    const path = storage.ref(`/student_images/${id}`)
     path.put(image)
     path.getDownloadURL().then(url => setDownload_url(url))
   }
@@ -109,8 +115,7 @@ function App() {
       <div className="mb-3">
         <label htmlFor="photo" className="form-label">Profile Picture</label>
         <input type="file" className="form-control" onChange={(e) => { setImage(e.target.files[0]) }} id="photo" />
-        {!download_url && <><button onClick={upload} className="btn btn-danger btn-sm my-2">Add</button>
-          <small className="text-danger">Please select a profile picture</small></>}
+        {!download_url && <><button onClick={upload} className="mx-2 btn btn-danger btn-sm my-2">Add</button> <small className="text-danger">Pleaes add a profile image</small></>}
 
       </div>
 
@@ -119,45 +124,60 @@ function App() {
         <button className="btn btn-warning mx-1" onClick={select}>select</button>
         <button className="btn btn-success mx-1" onClick={update}>update</button>
         <button className="btn btn-danger mx-1" onClick={remove}>delete</button>
-        <button className="btn btn-primary mx-1" onClick={getAllData}>Get All Students Data</button>
       </div>
 
-      <div className="data">
-        {data ? (
-          <table className="table">
-            <thead>
-              <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Roll no</th>
-                <th scope="col">Section</th>
-                <th scope="col">Gender</th>
-                <th scope="col">Profile picture</th>
-              </tr>
-            </thead>
+      <div className="data  my-2">
+        <h3>Selected Student</h3>
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Roll no</th>
+              <th scope="col">Section</th>
+              <th scope="col">Gender</th>
+              <th scope="col">Profile picture</th>
+            </tr>
+          </thead>
+          {data.name && (
             <tbody>
-              {data.name ? (
-                <tr>
-                  <th scope="row">{data?.name}</th>
-                  <td>{data?.roll}</td>
-                  <td>{data?.section}</td>
-                  <td>{data?.gender}</td>
-                  <td><img src={data?.image_url} alt="" style={{ width: '40px', height: '40px' }} /></td>
-                </tr>
-              ) : (
-                data.map(student => (
-                  <tr>
-                    <th scope="row">{student?.name}</th>
-                    <td>{student?.roll}</td>
-                    <td>{student?.section}</td>
-                    <td>{student?.gender}</td>
-                    <td><img alt="" src={student?.image_url} style={{ width: '40px', height: '40px' }} /></td>
-                  </tr>
-                ))
-              )}
+              <tr>
+                <th scope="row">{data?.name}</th>
+                <td>{data?.roll}</td>
+                <td>{data?.section}</td>
+                <td>{data?.gender}</td>
+                <td><img src={data?.image_url} alt="" style={{ width: '40px', height: '40px' }} /></td>
+              </tr>
             </tbody>
-          </table>
-        ) : ''}
+          )}
+        </table>
       </div >
+
+      <div className="students my-2">
+        <h1>All Students</h1>
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Roll no</th>
+              <th scope="col">Section</th>
+              <th scope="col">Gender</th>
+              <th scope="col">Profile picture</th>
+            </tr>
+          </thead>
+          <tbody>
+            {students && students.map(student => (
+              <tr key={student.id}>
+                <th scope="row">{student?.name}</th>
+                <td>{student?.roll}</td>
+                <td>{student?.section}</td>
+                <td>{student?.gender}</td>
+                <td><img alt="" src={student?.image_url} style={{ width: '40px', height: '40px' }} /></td>
+              </tr>
+            ))
+            }
+          </tbody>
+        </table>
+      </div>
     </div >
   )
 }
